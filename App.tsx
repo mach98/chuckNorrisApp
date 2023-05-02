@@ -4,7 +4,7 @@ import HomeScreen from './src/screens/HomeScreen/HomeScreen';
 
 const App = () => {
   return (
-    <SafeAreaView style={{flex: 1}}>
+    <SafeAreaView style={{flex: 1, backgroundColor: '#EFEFEF'}}>
       <HomeScreen />
     </SafeAreaView>
   );

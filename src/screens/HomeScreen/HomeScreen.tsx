@@ -5,30 +5,40 @@ import styles from './HomeScreen.stylesheet';
 import Jokes from '../../components/Jokes/Jokes';
 import JokeCategory from '../../components/JokeCategory/JokeCategory';
 import {IHomeScreenProps} from './HomeScreen.interface';
+import {JOKES_URL} from '../../constants/URLS';
+import SearchBar from '../../components/SearchBar/SearchBar';
 
-const JOKES = 'https://api.chucknorris.io/jokes/';
-
-const HomeScreen: FC<IHomeScreenProps> = () => {
+const HomeScreen: FC = () => {
   const [jokes, setJokes] = useState<IHomeScreenProps[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [isSearch, setIsSearch] = useState(false);
   const [joke, setJoke] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const searchJokes = useCallback(async () => {
     if (!search) {
       return;
     }
-    const response = await axios.get(`${JOKES}search?query=${search}`);
-    setJokes(response.data.result);
-    setIsSearch(true);
+    try {
+      const response = await axios.get(`${JOKES_URL}search?query=${search}`);
+      setJokes(response.data.result);
+      setIsSearch(true);
+    } catch (error) {
+      setErrorMessage('Something went wrong!!!');
+    }
   }, [search]);
 
   const onSelectCategory = useCallback(async (category: string) => {
-    const response = await axios.get(`${JOKES}random?category=${category}`);
-    setJoke(response.data.value);
-    console.log(response.data);
-    setIsSearch(false);
+    try {
+      const response = await axios.get(
+        `${JOKES_URL}random?category=${category}`,
+      );
+      setJoke(response.data.value);
+      setIsSearch(false);
+    } catch (error) {
+      console.log(error);
+    }
   }, []);
 
   const categoryList = useMemo(
@@ -51,8 +61,8 @@ const HomeScreen: FC<IHomeScreenProps> = () => {
   useEffect(() => {
     const fetchData = async () => {
       const [response, responseCategories] = await Promise.all([
-        axios.get(`${JOKES}random`),
-        axios.get(`${JOKES}categories`),
+        axios.get(`${JOKES_URL}random`),
+        axios.get(`${JOKES_URL}categories`),
       ]);
       setJokes(response.data.value);
       setCategories(responseCategories.data);
@@ -61,46 +71,30 @@ const HomeScreen: FC<IHomeScreenProps> = () => {
   }, []);
 
   return (
-    <View style={{margin: 10}}>
-      <Text style={{alignItems: 'center', justifyContent: 'center'}}>
-        Chuck Norris Jokes
-      </Text>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: 10,
-        }}>
-        <TextInput
-          placeholder="Search any jokes here"
-          onChangeText={text => setSearch(text)}
-          value={search}
-          style={{backgroundColor: '#677791', width: '80%'}}
-        />
-        <TouchableOpacity
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 15,
-            marginHorizontal: 10,
-            backgroundColor: '#33435c',
-          }}
-          onPress={searchJokes}>
-          <View>
-            <Text>GO</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+    <View style={styles.container}>
+      <Text style={styles.headerText}>Chuck Norris Jokes</Text>
+      <SearchBar
+        search={search}
+        onSearchChange={newSearch => setSearch(newSearch)}
+        onSearchSubmit={searchJokes}
+      />
+      {errorMessage ? (
+        <Text style={styles.errorMessage}>{errorMessage}</Text>
+      ) : null}
+
       {categoryList}
-      {isSearch ? (
-        <FlatList
-          data={jokes}
-          renderItem={({item}) => <Jokes joke={item.value} />}
-          keyExtractor={item => item.id}
-        />
-      ) : joke ? (
-        <Jokes joke={joke} />
+      {search.length > 0 ? (
+        <View style={styles.displayJokes}>
+          {isSearch ? (
+            <FlatList
+              data={jokes}
+              renderItem={({item}) => <Jokes joke={item.value} />}
+              keyExtractor={item => item.id}
+            />
+          ) : joke ? (
+            <Jokes joke={joke} />
+          ) : null}
+        </View>
       ) : null}
     </View>
   );
