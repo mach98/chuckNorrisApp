@@ -26,6 +26,7 @@ const HomeScreen: FC = () => {
       const response = await axios.get(`${JOKES_URL}search?query=${search}`);
       setJokes(response.data.result);
       setIsSearch(true);
+      setErrorMessage('');
     } catch (error) {
       setErrorMessage('Something went wrong!!!');
     }
