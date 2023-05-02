@@ -15,9 +15,11 @@ const HomeScreen: FC = () => {
   const [isSearch, setIsSearch] = useState(false);
   const [joke, setJoke] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const searchJokes = useCallback(async () => {
     if (!search) {
+      setErrorMessage('Please enter a search query!');
       return;
     }
     try {
@@ -29,17 +31,21 @@ const HomeScreen: FC = () => {
     }
   }, [search]);
 
-  const onSelectCategory = useCallback(async (category: string) => {
-    try {
-      const response = await axios.get(
-        `${JOKES_URL}random?category=${category}`,
-      );
-      setJoke(response.data.value);
-      setIsSearch(false);
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
+  const onSelectCategory = useCallback(
+    async (category: string) => {
+      try {
+        const response = await axios.get(
+          `${JOKES_URL}random?category=${category}`,
+        );
+        setIsSearch(false);
+        setJoke(response.data.value);
+        setSelectedCategory(category);
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    [selectedCategory],
+  );
 
   const categoryList = useMemo(
     () => (
@@ -49,6 +55,7 @@ const HomeScreen: FC = () => {
           <JokeCategory
             category={item}
             onPress={() => onSelectCategory(item)}
+            selectedCategory={selectedCategory === item}
           />
         )}
         keyExtractor={item => item}
@@ -83,19 +90,18 @@ const HomeScreen: FC = () => {
       ) : null}
 
       {categoryList}
-      {search.length > 0 ? (
-        <View style={styles.displayJokes}>
-          {isSearch ? (
-            <FlatList
-              data={jokes}
-              renderItem={({item}) => <Jokes joke={item.value} />}
-              keyExtractor={item => item.id}
-            />
-          ) : joke ? (
-            <Jokes joke={joke} />
-          ) : null}
-        </View>
-      ) : null}
+
+      <View style={styles.displayJokes}>
+        {isSearch && search.length > 0 ? (
+          <FlatList
+            data={jokes}
+            renderItem={({item}) => <Jokes joke={item.value} />}
+            keyExtractor={item => item.id}
+          />
+        ) : jokes ? (
+          <Jokes joke={joke} />
+        ) : null}
+      </View>
     </View>
   );
 };
